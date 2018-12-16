@@ -2,16 +2,15 @@
 
 namespace Flagbit\Plantuml\TokenReflection;
 
-use TokenReflection\IReflectionClass;
-use TokenReflection\IReflectionParameter;
+use ReflectionClass;
 
 class DocContentWriter extends \Flagbit\Plantuml\TokenReflection\WriterAbstract
 {
     /**
-     * @param \TokenReflection\IReflectionClass $class
+     * @param ReflectionClass $class
      * @return string
      */
-    public function writeProperties(\TokenReflection\IReflectionClass $class)
+    public function writeProperties(ReflectionClass $class)
     {
         $written = '';
         $docComment = (string)$class->getDocComment();
@@ -24,10 +23,11 @@ class DocContentWriter extends \Flagbit\Plantuml\TokenReflection\WriterAbstract
     }
 
     /**
-     * @param \TokenReflection\IReflectionMethod $method
+     * @param string $name
+     * @param string $type
      * @return string
      */
-    protected function writeProperty($name, $type) {
+    protected function writeProperty(string $name, string $type) {
         return $this->formatLine($this->writeVisibility() . $name
             . $this->writeType($type));
     }
@@ -51,10 +51,10 @@ class DocContentWriter extends \Flagbit\Plantuml\TokenReflection\WriterAbstract
     }
 
     /**
-     * @param \TokenReflection\IReflectionClass $class
+     * @param ReflectionClass $class
      * @return string
      */
-    public function writeMethods(IReflectionClass $class)
+    public function writeMethods(ReflectionClass $class)
     {
         $written = '';
         $docComment = (string)$class->getDocComment();
@@ -67,10 +67,12 @@ class DocContentWriter extends \Flagbit\Plantuml\TokenReflection\WriterAbstract
     }
 
     /**
-     * @param \TokenReflection\IReflectionClass $class
+     * @param string $name
+     * @param string $params
+     * @param string $returnType
      * @return string
      */
-    protected function writeMethod($name, $params, $returnType)
+    protected function writeMethod(string $name, string $params, string $returnType)
     {
         return $this->formatLine($this->writeVisibility()
             . $name . $this->writeParameters($params)

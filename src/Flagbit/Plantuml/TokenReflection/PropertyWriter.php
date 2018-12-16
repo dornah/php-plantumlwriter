@@ -2,76 +2,72 @@
 
 namespace Flagbit\Plantuml\TokenReflection;
 
-use TokenReflection\IReflectionProperty;
+use ReflectionProperty;
 
 class PropertyWriter extends WriterAbstract
 {
     /**
-     * @param IReflectionProperty $property
+     * @param ReflectionProperty $property
      *
      * @return string
      */
-    public function writeElement(IReflectionProperty $property)
+    public function writeElement(ReflectionProperty $property)
     {
         return $this->formatLine($this->writeVisibility($property) . $property->getName()
             . $this->writeType($property) . $this->writeValue($property));
     }
 
     /**
-     * @param IReflectionProperty[] $properties
+     * @param ReflectionProperty[] $properties
      *
      * @return string
      */
     public function writeElements(array $properties)
     {
         // see https://bugs.php.net/bug.php?id=50688
-        @usort($properties, function(IReflectionProperty $a, IReflectionProperty $b) {
+        @usort($properties, function(ReflectionProperty $a, ReflectionProperty $b) {
             return strnatcasecmp($a->getName(), $b->getName());
         });
 
         $propertiesString = '';
         foreach ($properties as $property) {
-            /** @var $property IReflectionProperty */
+            /** @var $property ReflectionProperty */
             $propertiesString .= $this->writeElement($property);
         }
         return $propertiesString;
     }
 
     /**
-     * @param IReflectionProperty $property
+     * @param ReflectionProperty $property
      *
      * @return string
      */
-    public function writeVisibility(IReflectionProperty $property)
+    public function writeVisibility(ReflectionProperty $property)
     {
         return $property->isPrivate() ? '-' : ($property->isProtected() ? '#' : '+');
     }
 
     /**
-     * @param IReflectionProperty $property
+     * @param ReflectionProperty $property
      *
      * @return string
      */
-    public function writeType(IReflectionProperty $property)
+    public function writeType(ReflectionProperty $property)
     {
         $type = '';
         preg_match('/\*\h+@var\h+([^\h]+)/', (string) $property->getDocComment(), $matches);
         if (isset($matches[1])) {
-            $type = $matches[1];
-            if ($property->getDeclaringClass()) {
-                $type = $this->expandNamespaceAlias($property->getDeclaringClass(), $type);
-            }
-            $type = ' : ' . $this->formatClassName($type);
+            $type = ' : ' . $this->formatClassName($matches[1]);
         }
         return $type;
     }
 
     /**
-     * @param IReflectionProperty $property
+     * @param ReflectionProperty $property
      *
      * @return string
      */
-    public function writeValue(IReflectionProperty $property)
+    public function writeValue(ReflectionProperty $property)
     {
         $value = '';
         if ($property->getDeclaringClass() && $defaultProperties = $property->getDeclaringClass()->getDefaultProperties()) {

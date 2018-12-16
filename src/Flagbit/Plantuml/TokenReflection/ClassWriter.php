@@ -2,7 +2,7 @@
 
 namespace Flagbit\Plantuml\TokenReflection;
 
-use TokenReflection\IReflectionClass;
+use ReflectionClass;
 
 class ClassWriter extends WriterAbstract
 {
@@ -64,11 +64,11 @@ class ClassWriter extends WriterAbstract
     }
 
     /**
-     * @param \TokenReflection\IReflectionClass $class
+     * @param ReflectionClass $class
      *
      * @return string
      */
-    public function writeElement(IReflectionClass $class)
+    public function writeElement(ReflectionClass $class)
     {
         $classString = $this->formatLine(
             $this->writeAbstract($class) . $this->writeObjectType($class) . ' ' . $this->formatClassName(
@@ -77,33 +77,21 @@ class ClassWriter extends WriterAbstract
         );
 
         if ($this->constantWriter) {
-            $constantReflections = $class->getOwnConstantReflections();
-            foreach ($class->getConstantReflections() as $otherConstantReflection) {
-                /* @var $otherConstantReflection \TokenReflection\ReflectionConstant */
-                $otherConstantName = $otherConstantReflection->getName();
-
-                foreach ($constantReflections as $constantReflection) {
-                    if ($constantReflection->getName() === $otherConstantName) {
-                        // skip constants already defined in our current class
-                        continue 2;
-                    }
-                }
-
-                $constantReflections[] = $otherConstantReflection;
-            }
-
-            $classString .= $this->constantWriter->writeElements($constantReflections);
+            /**
+             * @todo Investigate the issue with constants
+             */
+            //$classString .= $this->constantWriter->writeElements($class->getReflectionConstants());
         }
 
         if ($this->propertyWriter) {
-            $classString .= $this->propertyWriter->writeElements($class->getOwnProperties());
+            $classString .= $this->propertyWriter->writeElements($class->getProperties());
             if($this->docContentWriter) {
                 $classString .= $this->docContentWriter->writeProperties($class);
             }
         }
 
         if ($this->methodWriter) {
-            $classString .= $this->methodWriter->writeElements($class->getOwnMethods());
+            $classString .= $this->methodWriter->writeElements($class->getMethods());
             if($this->docContentWriter) {
                 $classString .= $this->docContentWriter->writeMethods($class);
             }
@@ -111,16 +99,16 @@ class ClassWriter extends WriterAbstract
 
         $classString .= $this->formatLine('}');
 
-        if ($class->getParentClassName()) {
+        if ($class->getParentClass()) {
             $classString .= $this->formatLine(
                 $this->writeObjectType($class) . ' ' . $this->formatClassName($class->getName()) . ' extends '
                 . $this->formatClassName(
-                    $class->getParentClassName()
+                    $class->getParentClass()->getName()
                 )
             );
         }
 
-        if ($interfaceNames = $class->getOwnInterfaceNames()) {
+        if ($interfaceNames = $class->getInterfaceNames()) {
             foreach ($interfaceNames as $interfaceName) {
                 $classString .= $this->formatLine(
                     $this->writeObjectType($class) . ' ' . $this->formatClassName($class->getName()) . ' implements '
@@ -135,11 +123,11 @@ class ClassWriter extends WriterAbstract
     }
 
     /**
-     * @param IReflectionClass $class
+     * @param ReflectionClass $class
      *
      * @return string
      */
-    private function writeAbstract(IReflectionClass $class)
+    private function writeAbstract(ReflectionClass $class)
     {
         $return = '';
         if (true === $class->isAbstract() && false === $class->isInterface()) {
@@ -149,11 +137,11 @@ class ClassWriter extends WriterAbstract
     }
 
     /**
-     * @param IReflectionClass $class
+     * @param ReflectionClass $class
      *
      * @return string
      */
-    private function writeObjectType(IReflectionClass $class)
+    private function writeObjectType(ReflectionClass $class)
     {
         $return = 'class';
         if (true === $class->isInterface()) {

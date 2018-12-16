@@ -2,10 +2,13 @@
 
 namespace Flagbit\Plantuml\Command;
 
+use Flagbit\Plantuml\TokenReflection\ClassWriter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 class WriteCommand extends Command
 {
@@ -26,17 +29,6 @@ class WriteCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $broker = new \TokenReflection\Broker(new \TokenReflection\Broker\Backend\Memory());
-
-        foreach ($input->getArgument('files') as $fileToProcess) {
-            if (is_dir($fileToProcess)) {
-                $broker->processDirectory($fileToProcess);
-            }
-            else {
-                $broker->processFile($fileToProcess);
-            }
-        }
-
         $classWriter = new \Flagbit\Plantuml\TokenReflection\ClassWriter();
         if (!$input->getOption('without-constants')) {
             $classWriter->setConstantWriter(new \Flagbit\Plantuml\TokenReflection\ConstantWriter());
@@ -52,10 +44,46 @@ class WriteCommand extends Command
         }
 
         $output->write('@startuml', "\n");
-        foreach ($broker->getClasses() as $class) {
-            /** @var $class \TokenReflection\IReflectionClass */
-            $output->write($classWriter->writeElement($class));
+        foreach ($input->getArgument('files') as $path) {
+            $output->write($this->writePath($path, $classWriter));
         }
         $output->write('@enduml', "\n");
+    }
+
+
+    protected function writePath(string $path, ClassWriter $classWriter)
+    {
+        if (is_dir($path)) {
+            return $this->writeDirectory($path, $classWriter);
+        } elseif (is_file($path)) {
+            return $this->writeFile($path, $classWriter);
+        } else {
+            throw new \InvalidArgumentException('The given directory/file does not exist.');
+        }
+    }
+
+    protected function writeDirectory(string $path, ClassWriter $classWriter)
+    {
+        $output = "";
+
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $entry) {
+            if ($entry->isFile()) {
+                $output .= $this->writeFile($entry, $classWriter);
+            }
+        }
+        return $output;
+    }
+
+    protected function writeFile(string $path, ClassWriter $classWriter)
+    {
+        $output = "";
+        $parsedFile = new \Go\ParserReflection\ReflectionFile($path);
+        $fileNameSpaces = $parsedFile->getFileNamespaces();
+        foreach ($fileNameSpaces as $namespace) {
+            foreach ($namespace->getClasses() as $class) {
+                $output .= $classWriter->writeElement($class);
+            }
+        }
+        return $output;
     }
 }

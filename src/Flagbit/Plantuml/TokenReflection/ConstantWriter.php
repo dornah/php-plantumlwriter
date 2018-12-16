@@ -2,35 +2,35 @@
 
 namespace Flagbit\Plantuml\TokenReflection;
 
-use TokenReflection\IReflectionConstant;
+use ReflectionClassConstant;
 
 class ConstantWriter extends WriterAbstract
 {
     /**
-     * @param IReflectionConstant $constant
+     * @param ReflectionClassConstant $constant
      *
      * @return string
      */
-    public function writeElement(IReflectionConstant $constant)
+    public function writeElement(ReflectionClassConstant $constant)
     {
         return $this->formatLine('+{static}' . $constant->getName() . ' = ' . $this->formatValue($constant->getValue()));
     }
 
     /**
-     * @param IReflectionConstant[] $constants
+     * @param ReflectionClassConstant[] $constants
      *
      * @return string
      */
     public function writeElements(array $constants)
     {
         // see https://bugs.php.net/bug.php?id=50688
-        @usort($constants, function(IReflectionConstant $a, IReflectionConstant $b) {
+        @usort($constants, function(ReflectionClassConstant $a, ReflectionClassConstant $b) {
             return strnatcasecmp($a->getName(), $b->getName());
         });
 
         $constantsString = '';
         foreach ($constants as $constant) {
-            /** @var $property IReflectionConstant */
+            /** @var $property ReflectionClassConstant */
             $constantsString .= $this->writeElement($constant);
         }
         return $constantsString;

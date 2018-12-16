@@ -2,7 +2,7 @@
 
 namespace Flagbit\Plantuml\TokenReflection;
 
-use TokenReflection\IReflectionClass;
+use ReflectionClass;
 
 abstract class WriterAbstract
 {
@@ -31,23 +31,6 @@ abstract class WriterAbstract
     public function formatLine($string)
     {
         return $this->indent . $string . $this->linebreak;
-    }
-
-    /**
-     * @param \TokenReflection\IReflectionClass $declaringClass The class using the namespace aliases
-     * @param string $aliasedClassName The class name used in the declaring class
-     * @return string
-     */
-    protected function expandNamespaceAlias(IReflectionClass $declaringClass, $aliasedClassName)
-    {
-        $aliasedClassName = trim($aliasedClassName);
-        foreach ($declaringClass->getNamespaceAliases() as $namespaceAlias) {
-            if (1 === preg_match('/\\\\' . preg_quote($aliasedClassName) . '$/', $namespaceAlias)) {
-                $aliasedClassName = $namespaceAlias;
-                break;
-            }
-        }
-        return $aliasedClassName;
     }
 
     /**
